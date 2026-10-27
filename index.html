@@ -1,0 +1,449 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>מנדטים 2026</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700&display=swap">
+<style>
+*{box-sizing:border-box}body{margin:0}
+/* Layout: one phone column; sticky tally bar; party rows with drag-to-fill bars; share sheet as in-page overlay */
+:root{
+  --bg:#FFFFFF; --surface:#F3F6FC; --line:#DCE3EF; --hair:#EEF2F8;
+  --ink:#0B1F44; --muted:#5A6B8C; --faint:#9AAACB;
+  --primary:#0038B8; --primary-soft:#E5ECFA; --on-primary:#FFFFFF;
+  --alert:#D92D3A; --alert-ink:#B11F2B; --alert-soft:#FDECEE;
+  --ok-ink:#157A4B; --ok-soft:#E7F6EE; --scrim:rgba(11,31,68,.55);
+  --font:"Rubik","Heebo","Arial Hebrew",Arial,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0A1428; --surface:#122042; --line:#2A3B5E; --hair:#1A2A4D;
+  --ink:#EAF0FB; --muted:#9AAACB; --faint:#5E6F92;
+  --primary:#4D8DFF; --primary-soft:#1A3366; --on-primary:#0A1428;
+  --alert:#FF5A65; --alert-ink:#FF8A92; --alert-soft:#3A1620;
+  --ok-ink:#5FD99A; --ok-soft:#123A2A; --scrim:rgba(0,0,0,.65); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0A1428; --surface:#122042; --line:#2A3B5E; --hair:#1A2A4D;
+  --ink:#EAF0FB; --muted:#9AAACB; --faint:#5E6F92;
+  --primary:#4D8DFF; --primary-soft:#1A3366; --on-primary:#0A1428;
+  --alert:#FF5A65; --alert-ink:#FF8A92; --alert-soft:#3A1620;
+  --ok-ink:#5FD99A; --ok-soft:#123A2A; --scrim:rgba(0,0,0,.65); color-scheme:dark}
+[hidden]{display:none!important}
+html,body{background:var(--bg)}
+body{color:var(--ink);font-family:var(--font);direction:rtl;font-size:16px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.wrap{max-width:480px;margin:0 auto;padding-block:16px 120px;display:flex;flex-direction:column;gap:12px}
+button,input{font-family:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+h1{margin:0;font-size:24px;font-weight:700;text-wrap:balance}
+.clock{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--primary);background:var(--primary-soft);padding:6px 10px;border-radius:999px;white-space:nowrap}
+.clock.closed{color:var(--alert-ink);background:var(--alert-soft)}
+.name{display:flex;flex-direction:column;gap:6px}
+.name label{font-size:13px;color:var(--muted);font-weight:500}
+.name input{height:48px;border-radius:12px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);padding:0 14px;font-size:17px}
+.name input:focus{border-color:var(--primary);outline:none}
+.name input.bad{border-color:var(--alert)}
+.house{background:var(--surface);border-radius:16px;padding:12px 12px 14px}
+.house svg{display:block;width:100%;height:auto}
+.house svg circle{transition:fill .3s ease}
+.sticky{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:8px;display:flex;flex-direction:column;gap:8px}
+.blocs{display:flex;justify-content:space-between;gap:6px;font-size:13px;flex-wrap:wrap}
+.blocs span{display:flex;align-items:center;gap:6px}
+.blocs i{width:9px;height:9px;border-radius:2px;display:block}
+.blocs b{font-weight:700;font-variant-numeric:tabular-nums}
+.meter{position:relative;height:8px;border-radius:4px;background:var(--line);display:flex;overflow:hidden}
+.meter span{height:100%;transition:width .3s ease}
+.meterwrap{position:relative}
+.maj{position:absolute;right:50.83%;top:-4px;width:2px;height:16px;background:var(--alert)}
+.lead{display:flex;justify-content:space-between;font-size:12px;color:var(--muted)}
+.lead em{font-style:normal;color:var(--alert-ink)}
+.status{padding:9px 12px;border-radius:10px;font-size:14px;font-weight:500;background:var(--primary-soft);color:var(--primary)}
+.status.err{background:var(--alert-soft);color:var(--alert-ink)}
+.status.ok{background:var(--ok-soft);color:var(--ok-ink)}
+.ghead{display:flex;justify-content:space-between;padding:14px 2px 2px;font-size:13px;font-weight:500;color:var(--muted)}
+.row{padding:10px 0 12px;border-bottom:1px solid var(--hair)}
+.rowtop{display:flex;align-items:center;gap:10px}
+.badge{width:40px;height:32px;border-radius:9px;flex:none;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;letter-spacing:.02em}
+.pname{flex:1;min-width:0;font-size:16px;font-weight:500;line-height:1.25}
+.pname small{display:block;font-size:12px;font-weight:400;color:var(--muted)}
+.num{font-size:22px;font-weight:700;min-width:32px;text-align:left;font-variant-numeric:tabular-nums}
+.num.zero{color:var(--faint)}
+.bar{position:relative;height:36px;margin-top:8px;border-radius:10px;background:var(--hair);touch-action:pan-y;cursor:pointer;user-select:none;-webkit-user-select:none}
+.bar .cap{position:absolute;right:0;top:0;bottom:0;border-radius:10px;background:var(--line)}
+.bar .fill{position:absolute;right:0;top:0;bottom:0;border-radius:10px}
+.bar .th{position:absolute;right:10%;top:7px;bottom:7px;width:2px;border-radius:1px;background:var(--alert)}
+.bar .knob{position:absolute;top:4px;width:28px;height:28px;margin-right:-14px;border-radius:50%;background:var(--bg);border:3px solid;box-sizing:border-box}
+.bar.anim .fill,.bar.anim .knob{transition:width .2s ease,right .2s ease}
+.scale{display:flex;justify-content:space-between;font-size:11px;color:var(--faint);padding:3px 2px 0;font-variant-numeric:tabular-nums}
+.foot{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--bg);border-top:1px solid var(--hair);padding:10px max(16px,env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.foot .in{max-width:480px;margin:0 auto;display:flex;gap:8px}
+.btn{height:52px;border-radius:12px;font-size:17px;font-weight:700;border:1.5px solid var(--primary);background:var(--bg);color:var(--primary);padding:0 16px}
+.btn.primary{background:var(--primary);color:var(--on-primary);flex:1}
+.btn.quiet{border-color:var(--line);color:var(--ink);font-weight:500;font-size:15px}
+.sheet{position:fixed;inset:0;z-index:20;background:var(--scrim);display:flex;align-items:flex-end;justify-content:center}
+.sheet .panel{background:var(--bg);width:100%;max-width:520px;max-height:92%;overflow:auto;border-radius:20px 20px 0 0;padding:16px max(16px,env(safe-area-inset-right,0px)) calc(16px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:12px}
+.sheet h2{margin:0;font-size:19px}
+.sheet p{margin:0;font-size:14px;color:var(--muted);line-height:1.5}
+.sheet img{width:100%;border-radius:12px;border:1px solid var(--line);-webkit-touch-callout:default}
+.actions{display:flex;flex-direction:column;gap:8px}
+.wa{display:flex;align-items:center;justify-content:center;gap:8px;height:52px;border-radius:12px;background:var(--primary);color:var(--on-primary);font-size:17px;font-weight:700;text-decoration:none}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="top">
+    <h1>מנדטים 2026</h1>
+    <span class="clock" id="clock">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+      <span id="clockText">ננעל ב־22:00</span>
+    </span>
+  </div>
+
+  <div class="name">
+    <label for="who">השם שלך (יופיע על התמונה)</label>
+    <input id="who" type="text" autocomplete="nickname" placeholder="הזן שם" maxlength="24">
+  </div>
+
+  <section class="house" aria-label="מליאת הכנסת">
+    <svg id="house" viewBox="0 0 334 178" role="img" aria-label="מליאה של 120 כיסאות"></svg>
+  </section>
+
+  <div class="sticky">
+    <div class="blocs" id="blocs"></div>
+    <div class="meterwrap"><div class="meter" id="meter"></div><span class="maj" aria-hidden="true"></span></div>
+    <div class="lead"><span id="lead">אין עדיין גוש מוביל</span><em>61 = רוב</em></div>
+    <div class="status" id="status" role="status"></div>
+  </div>
+
+  <div id="list"></div>
+</div>
+
+<div class="foot">
+  <div class="in">
+    <button class="btn quiet" id="reset" type="button">איפוס</button>
+    <button class="btn primary" id="share" type="button">שתף את הניחוש</button>
+  </div>
+</div>
+
+<div class="sheet" id="sheet" hidden>
+  <div class="panel" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+    <h2 id="sheetTitle">הניחוש שלך מוכן</h2>
+    <p>לחיצה ארוכה על התמונה ואז "שתף" או "שמור תמונה", ומשם לוואטסאפ. אפשר גם לשלוח כטקסט.</p>
+    <img id="shot" alt="תמונת הניחוש">
+    <div class="actions">
+      <a class="wa" id="wa" href="#" target="_blank" rel="noopener">שלח כטקסט בוואטסאפ</a>
+      <button class="btn" id="copy" type="button">העתק טקסט</button>
+      <button class="btn quiet" id="close" type="button">חזרה לעריכה</button>
+    </div>
+  </div>
+</div>
+
+<div class="sheet" id="confirm" hidden>
+  <div class="panel" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
+    <h2 id="confirmTitle">לאפס את כל הניחוש?</h2>
+    <p>כל המנדטים יחזרו לאפס.</p>
+    <div class="actions">
+      <button class="btn primary" id="doReset" type="button">אפס</button>
+      <button class="btn quiet" id="noReset" type="button">ביטול</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var LOCK = Date.UTC(2026, 9, 27, 20, 0, 0); // 22:00 Israel time
+  var MAX = 40;
+  var BLOCS = [
+    { name: 'גוש נתניהו', color: '#22345C' },
+    { name: 'גוש השינוי', color: '#5B79B8' },
+    { name: 'ערבים', color: '#A9BCE3' }
+  ];
+  var P = [
+    { id:'likud', l:'מחל', name:'הליכוד', who:'בנימין נתניהו', color:'#1D4ED8', ink:'#FFFFFF', bloc:0 },
+    { id:'otzma', l:'ב', name:'עוצמה יהודית', who:'איתמר בן גביר', color:'#F97316', ink:'#2A1203', bloc:0 },
+    { id:'shas', l:'שס', name:'ש״ס', who:'אריה דרעי', color:'#475569', ink:'#FFFFFF', bloc:0 },
+    { id:'utj', l:'ג', name:'יהדות התורה', who:'', color:'#0E7490', ink:'#FFFFFF', bloc:0 },
+    { id:'rzp', l:'ט', name:'הציונות הדתית וזהות', who:'סמוטריץ׳ ופייגלין', color:'#CA8A04', ink:'#231A00', bloc:0 },
+    { id:'noam', l:'ני', name:'נעם', who:'אבי מעוז', color:'#92400E', ink:'#FFFFFF', bloc:0 },
+    { id:'amcha', l:'ך', name:'עמך ישראל', who:'עופר וינטר', color:'#78716C', ink:'#FFFFFF', bloc:0 },
+    { id:'yashar', l:'דרך', name:'ישר!', who:'גדי איזנקוט', color:'#0EA5E9', ink:'#03243A', bloc:1 },
+    { id:'yachad', l:'רק', name:'ביחד', who:'נפתלי בנט', color:'#4338CA', ink:'#FFFFFF', bloc:1 },
+    { id:'dems', l:'אמת', name:'הדמוקרטים', who:'יאיר גולן', color:'#DB2777', ink:'#FFFFFF', bloc:1 },
+    { id:'ib', l:'ל', name:'ישראל ביתנו', who:'אביגדור ליברמן', color:'#4D7C0F', ink:'#FFFFFF', bloc:1 },
+    { id:'res', l:'די', name:'המילואימניקים והכלכלית', who:'הנדל וזליכה', color:'#10B981', ink:'#03261A', bloc:1 },
+    { id:'bw', l:'כן', name:'כחול לבן', who:'בני גנץ', color:'#93C5FD', ink:'#0B1F44', bloc:1 },
+    { id:'joint', l:'ודם', name:'הרשימה המשותפת', who:'', color:'#7C3AED', ink:'#FFFFFF', bloc:2 },
+    { id:'raam', l:'עם', name:'רע״ם', who:'', color:'#15803D', ink:'#FFFFFF', bloc:2 }
+  ];
+
+  var seats = {}; P.forEach(function(p){ seats[p.id] = 0; });
+  var msg = '', msgKind = '';
+  var $ = function(id){ return document.getElementById(id); };
+
+  try {
+    var saved = JSON.parse(localStorage.getItem('mandates2026') || 'null');
+    if (saved && saved.seats) { P.forEach(function(p){ var v = +saved.seats[p.id] || 0; seats[p.id] = v; }); }
+    if (saved && saved.name) $('who').value = saved.name;
+  } catch (e) {}
+  function persist(){ try { localStorage.setItem('mandates2026', JSON.stringify({ seats: seats, name: $('who').value })); } catch (e) {} }
+
+  function total(){ return P.reduce(function(a,p){ return a + seats[p.id]; }, 0); }
+  function locked(){ return Date.now() >= LOCK; }
+  function blocSums(){ return BLOCS.map(function(b,bi){ return P.filter(function(p){ return p.bloc === bi; }).reduce(function(a,p){ return a + seats[p.id]; }, 0); }); }
+
+  // hemicycle geometry
+  var geo = [];
+  (function(){
+    var radii = [62,82,102,122,142,162], counts = [11,15,18,22,25,29], cx = 167, cy = 170;
+    radii.forEach(function(r,ri){ for (var k=0;k<counts[ri];k++){ var t = Math.PI*(k+.5)/counts[ri]; geo.push({ t:t, r:r, x:cx + r*Math.cos(t), y:cy - r*Math.sin(t) }); } });
+    geo.sort(function(a,b){ return (a.t-b.t) || (a.r-b.r); });
+    var NS = 'http://www.w3.org/2000/svg', svg = $('house');
+    geo.forEach(function(g){ var c = document.createElementNS(NS,'circle'); c.setAttribute('cx', g.x.toFixed(1)); c.setAttribute('cy', g.y.toFixed(1)); c.setAttribute('r','5'); svg.appendChild(c); g.el = c; });
+    var t1 = document.createElementNS(NS,'text'); t1.setAttribute('x','167'); t1.setAttribute('y','160'); t1.setAttribute('text-anchor','middle'); t1.setAttribute('font-size','34'); t1.setAttribute('font-weight','700'); t1.setAttribute('font-family','Rubik, sans-serif'); t1.id = 'tot'; svg.appendChild(t1);
+    var t2 = document.createElementNS(NS,'text'); t2.setAttribute('x','167'); t2.setAttribute('y','176'); t2.setAttribute('text-anchor','middle'); t2.setAttribute('font-size','12'); t2.setAttribute('font-family','Rubik, sans-serif'); t2.textContent = 'מתוך 120'; t2.id = 'totSub'; svg.appendChild(t2);
+  })();
+
+  // party rows
+  var rows = {};
+  (function(){
+    var list = $('list');
+    BLOCS.forEach(function(b,bi){
+      var g = document.createElement('section');
+      g.setAttribute('aria-label', b.name);
+      var h = document.createElement('div'); h.className = 'ghead';
+      h.innerHTML = '<span></span><span></span>';
+      h.firstChild.textContent = b.name;
+      g.appendChild(h);
+      P.filter(function(p){ return p.bloc === bi; }).forEach(function(p){
+        var row = document.createElement('div'); row.className = 'row';
+        row.innerHTML =
+          '<div class="rowtop"><span class="badge" aria-hidden="true"></span><span class="pname"></span><span class="num"></span></div>' +
+          '<div class="bar anim" role="slider" tabindex="0" aria-valuemin="0" aria-valuemax="' + MAX + '"><span class="cap"></span><span class="fill"></span><span class="th"></span><span class="knob"></span></div>';
+        var badge = row.querySelector('.badge'); badge.textContent = p.l; badge.style.background = p.color; badge.style.color = p.ink;
+        var pn = row.querySelector('.pname'); pn.textContent = p.name;
+        if (p.who) { var s = document.createElement('small'); s.textContent = p.who; pn.appendChild(s); }
+        var bar = row.querySelector('.bar'); bar.setAttribute('aria-label', p.name);
+        row.querySelector('.fill').style.background = p.color;
+        row.querySelector('.knob').style.borderColor = p.color;
+        g.appendChild(row);
+        rows[p.id] = { row: row, bar: bar, num: row.querySelector('.num'), fill: row.querySelector('.fill'), cap: row.querySelector('.cap'), knob: row.querySelector('.knob') };
+        wire(p, bar);
+      });
+      rows['_head'+bi] = h.lastChild;
+      list.appendChild(g);
+    });
+    var sc = document.createElement('div'); sc.className = 'scale'; sc.setAttribute('aria-hidden','true');
+    sc.innerHTML = '<span>0</span><span>10</span><span>20</span><span>30</span><span>40</span>';
+    // scale under first bar group header for reference
+    list.insertBefore(sc, list.firstChild);
+  })();
+
+  function setVal(p, raw){
+    if (locked()) { msg = 'ההגשה נסגרה ב־22:00'; msgKind = 'err'; render(); return; }
+    var n = seats[p.id];
+    var cap = n + (120 - total());
+    var v = Math.max(0, Math.min(MAX, Math.round(raw)));
+    msg = ''; msgKind = '';
+    if (v > 0 && v < 4) v = v < 2 ? 0 : 4;
+    if (v > cap) {
+      v = cap; if (v > 0 && v < 4) v = 0;
+      msg = 'נשארו רק ' + (cap - n) + ' מנדטים פנויים'; msgKind = 'err';
+    }
+    seats[p.id] = v;
+    persist(); render();
+  }
+
+  function wire(p, bar){
+    var drag = null;
+    function valAt(rect, x){ return (rect.right - x) / rect.width * MAX; }
+    bar.addEventListener('pointerdown', function(e){
+      drag = { x0: e.clientX, y0: e.clientY, moved: false, rect: bar.getBoundingClientRect(), id: e.pointerId };
+    });
+    bar.addEventListener('pointermove', function(e){
+      if (!drag) return;
+      if (!drag.moved) {
+        var dx = Math.abs(e.clientX - drag.x0), dy = Math.abs(e.clientY - drag.y0);
+        if (dy > 10 && dy > dx) { drag = null; return; }
+        if (dx < 6) return;
+        drag.moved = true; bar.classList.remove('anim');
+        try { bar.setPointerCapture(drag.id); } catch (err) {}
+      }
+      setVal(p, valAt(drag.rect, e.clientX));
+    });
+    function end(e){
+      if (!drag) return;
+      if (!drag.moved && e.type === 'pointerup') setVal(p, valAt(drag.rect, e.clientX));
+      drag = null; bar.classList.add('anim');
+    }
+    bar.addEventListener('pointerup', end);
+    bar.addEventListener('pointercancel', end);
+    bar.addEventListener('keydown', function(e){
+      var n = seats[p.id];
+      if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); setVal(p, n === 0 ? 4 : n + 1); }
+      else if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { e.preventDefault(); setVal(p, n === 4 ? 0 : n - 1); }
+    });
+  }
+
+  function leadText(sums){
+    var max = Math.max.apply(null, sums);
+    if (max === 0) return 'אין עדיין גוש מוביל';
+    var li = sums.indexOf(max);
+    if (sums.filter(function(s){ return s === max; }).length > 1) return 'תיקו בין הגושים';
+    return max >= 61 ? BLOCS[li].name + ' עם רוב' : 'מוביל: ' + BLOCS[li].name;
+  }
+
+  function render(){
+    var t = total(), left = 120 - t;
+    var css = getComputedStyle(document.documentElement);
+    var empty = css.getPropertyValue('--line').trim() || '#DCE3EF';
+    var order = [];
+    P.forEach(function(p){ for (var i=0;i<seats[p.id];i++) order.push(p.color); });
+    geo.forEach(function(g,i){ g.el.setAttribute('fill', order[i] || empty); });
+    var tot = $('tot'); tot.textContent = t; tot.setAttribute('fill', css.getPropertyValue('--ink').trim());
+    $('totSub').setAttribute('fill', css.getPropertyValue('--muted').trim());
+
+    var sums = blocSums();
+    $('blocs').innerHTML = '';
+    $('meter').innerHTML = '';
+    BLOCS.forEach(function(b,bi){
+      var s = document.createElement('span');
+      var i = document.createElement('i'); i.style.background = b.color;
+      var bb = document.createElement('b'); bb.textContent = sums[bi];
+      s.appendChild(i); s.appendChild(document.createTextNode(b.name + ' ')); s.appendChild(bb);
+      $('blocs').appendChild(s);
+      var m = document.createElement('span'); m.style.width = (sums[bi]/120*100) + '%'; m.style.background = b.color;
+      $('meter').appendChild(m);
+      rows['_head'+bi].textContent = sums[bi] + ' מנדטים';
+    });
+    $('lead').textContent = leadText(sums);
+
+    P.forEach(function(p){
+      var r = rows[p.id], n = seats[p.id], cap = Math.min(MAX, n + left);
+      r.num.textContent = n; r.num.className = 'num' + (n === 0 ? ' zero' : '');
+      r.fill.style.width = (n/MAX*100) + '%';
+      r.cap.style.width = (cap/MAX*100) + '%';
+      r.knob.style.right = (n/MAX*100) + '%';
+      r.bar.setAttribute('aria-valuenow', n);
+      r.bar.setAttribute('aria-valuetext', n + ' מנדטים');
+    });
+
+    var st = $('status');
+    if (locked()) { st.className = 'status err'; st.textContent = 'ההגשה נסגרה ב־22:00. אפשר עדיין לצפות בניחוש.'; }
+    else if (msgKind === 'err') { st.className = 'status err'; st.textContent = msg; }
+    else if (t === 120) { st.className = 'status ok'; st.textContent = 'כל 120 המנדטים חולקו. אפשר לשתף.'; }
+    else { st.className = 'status'; st.textContent = 'נותרו ' + left + ' מנדטים · גרור על הפס של כל מפלגה'; }
+  }
+
+  // countdown
+  function tick(){
+    var ms = LOCK - Date.now(), el = $('clockText');
+    if (ms <= 0) { el.textContent = 'ההגשה נסגרה'; $('clock').classList.add('closed'); render(); return; }
+    var m = Math.ceil(ms/60000);
+    el.textContent = m > 120 ? 'ננעל ב־22:00' : 'ננעל בעוד ' + (m >= 60 ? Math.floor(m/60) + ':' + String(m%60).padStart(2,'0') + ' ש׳' : m + ' דק׳');
+  }
+  setInterval(tick, 20000); tick();
+
+  $('who').addEventListener('input', function(){ $('who').classList.remove('bad'); persist(); });
+
+  // reset
+  $('reset').addEventListener('click', function(){ $('confirm').hidden = false; });
+  $('noReset').addEventListener('click', function(){ $('confirm').hidden = true; });
+  $('doReset').addEventListener('click', function(){
+    P.forEach(function(p){ seats[p.id] = 0; }); msg=''; msgKind=''; persist(); render(); $('confirm').hidden = true;
+  });
+
+  function stamp(){
+    try { return new Intl.DateTimeFormat('he-IL', { timeZone:'Asia/Jerusalem', day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit', hour12:false }).format(new Date()); }
+    catch (e) { return new Date().toLocaleString(); }
+  }
+
+  function asText(name, when){
+    var sums = blocSums();
+    var lines = ['הניחוש של ' + name + ' · מנדטים 2026', 'נשלח: ' + when, ''];
+    BLOCS.forEach(function(b,bi){
+      lines.push(b.name + ': ' + sums[bi]);
+      P.filter(function(p){ return p.bloc === bi; }).forEach(function(p){ lines.push('  ' + p.name + ' (' + p.l + '): ' + seats[p.id]); });
+    });
+    lines.push('', 'סה״כ: ' + total());
+    return lines.join('\n');
+  }
+
+  function rr(ctx, x, y, w, h, r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+
+  function drawShot(name, when){
+    var W = 1080, rowH = 74, H = 640 + P.length * rowH + BLOCS.length * 56 + 60;
+    var c = document.createElement('canvas'); c.width = W; c.height = H;
+    var x = c.getContext('2d');
+    var F = 'Rubik, Arial, sans-serif';
+    x.fillStyle = '#FFFFFF'; x.fillRect(0,0,W,H);
+    x.fillStyle = '#0038B8'; x.fillRect(0,0,W,16);
+    x.direction = 'rtl'; x.textAlign = 'right'; x.textBaseline = 'alphabetic';
+    x.fillStyle = '#0B1F44'; x.font = '700 58px ' + F; x.fillText('הניחוש של ' + name, W-60, 108);
+    x.fillStyle = '#5A6B8C'; x.font = '400 30px ' + F; x.fillText('מנדטים 2026 · ' + when, W-60, 156);
+    // hemicycle
+    var cx = W/2, cy = 470, k = 2.4, order = [];
+    P.forEach(function(p){ for (var i=0;i<seats[p.id];i++) order.push(p.color); });
+    geo.forEach(function(g,i){ x.beginPath(); x.arc(cx + (g.x-167)*k, cy + (g.y-170)*k, 11.5, 0, Math.PI*2); x.fillStyle = order[i] || '#DCE3EF'; x.fill(); });
+    x.textAlign = 'center'; x.fillStyle = '#0B1F44'; x.font = '700 76px ' + F; x.fillText(String(total()), cx, cy - 16);
+    x.fillStyle = '#5A6B8C'; x.font = '400 26px ' + F; x.fillText('מתוך 120', cx, cy + 20);
+    var y = 560, sums = blocSums();
+    BLOCS.forEach(function(b,bi){
+      y += 56;
+      x.textAlign = 'right'; x.fillStyle = b.color; x.fillRect(W-74, y-24, 14, 14);
+      x.fillStyle = '#0B1F44'; x.font = '700 32px ' + F; x.fillText(b.name, W-90, y-8);
+      x.textAlign = 'left'; x.fillText(String(sums[bi]), 60, y-8);
+      x.fillStyle = '#DCE3EF'; x.fillRect(60, y+4, W-120, 2);
+      P.filter(function(p){ return p.bloc === bi; }).forEach(function(p){
+        y += rowH;
+        var n = seats[p.id];
+        x.fillStyle = p.color; rr(x, W-60-84, y-46, 84, 54, 12); x.fill();
+        x.textAlign = 'center'; x.fillStyle = p.ink; x.font = '700 28px ' + F; x.fillText(p.l, W-60-42, y-10);
+        x.textAlign = 'right'; x.fillStyle = n ? '#0B1F44' : '#9AAACB'; x.font = '500 32px ' + F; x.fillText(p.name, W-170, y-8);
+        var bw = 300, bx = 140;
+        x.fillStyle = '#EEF2F8'; rr(x, bx, y-30, bw, 20, 10); x.fill();
+        if (n) { x.fillStyle = p.color; rr(x, bx + bw - Math.max(20, bw*n/MAX), y-30, Math.max(20, bw*n/MAX), 20, 10); x.fill(); }
+        x.textAlign = 'left'; x.fillStyle = n ? '#0B1F44' : '#9AAACB'; x.font = '700 40px ' + F; x.fillText(String(n), 60, y-6);
+      });
+    });
+    x.textAlign = 'center'; x.fillStyle = '#9AAACB'; x.font = '400 24px ' + F; x.fillText('120 מנדטים · ' + leadText(sums), W/2, H-34);
+    return c.toDataURL('image/png');
+  }
+
+  $('share').addEventListener('click', function(){
+    var name = $('who').value.trim(), st = $('status');
+    if (locked()) { render(); return; }
+    if (!name) { $('who').classList.add('bad'); $('who').focus(); st.className = 'status err'; st.textContent = 'כתוב את השם שלך כדי שנדע של מי הניחוש'; return; }
+    var t = total();
+    if (t !== 120) { st.className = 'status err'; st.textContent = t < 120 ? 'חסרים עוד ' + (120 - t) + ' מנדטים כדי להגיע ל־120' : 'יש ' + (t - 120) + ' מנדטים מעבר ל־120'; return; }
+    var when = stamp();
+    var go = function(){
+      $('shot').src = drawShot(name, when);
+      var txt = asText(name, when);
+      $('wa').href = 'https://wa.me/?text=' + encodeURIComponent(txt);
+      $('copy').onclick = function(){
+        var b = $('copy');
+        var done = function(){ b.textContent = 'הועתק'; setTimeout(function(){ b.textContent = 'העתק טקסט'; }, 1800); };
+        if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(done, function(){ b.textContent = 'ההעתקה נחסמה'; });
+        else b.textContent = 'ההעתקה נחסמה';
+      };
+      $('sheet').hidden = false;
+    };
+    if (document.fonts && document.fonts.load) Promise.all([document.fonts.load('700 40px Rubik'), document.fonts.load('400 30px Rubik'), document.fonts.load('500 32px Rubik')]).then(go, go);
+    else go();
+  });
+  $('close').addEventListener('click', function(){ $('sheet').hidden = true; });
+
+  try { matchMedia('(prefers-color-scheme: dark)').addEventListener('change', render); } catch (e) {}
+  new MutationObserver(render).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+  render();
+})();
+</script>
+
+</body>
+</html>
